@@ -1,1 +1,1815 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="referrer" content="strict-origin-when-cross-origin"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#F46149"/><meta name="description" content="Use the interactive map to find play sessions for your child where they can meet children in nearby areas."/><title>Find a Playmate | Abu Dhabi Early Childhood Authority</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Find a Playmate | Abu Dhabi Early Childhood Authority</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root{
+  --coral:#f46149;
+  --navy:#20245a;
+  --teal:#599b8d;
+  font-family:"Nunito Sans",Arial,sans-serif;
+  color:var(--navy);
+  background:var(--coral);
+}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{
+  outline:3px solid var(--navy);
+  outline-offset:3px;
+}
+.container{width:min(1248px,calc(100% - 64px));margin:auto}
+.skip{position:absolute;top:-60px}
+.skip:focus{top:5px;background:white;padding:10px;z-index:3000}
+.header-top,.top-nav,.main-nav,.hero-copy,.benefit,
+.discovery-controls,.age-picker,.age-buttons,.search-row,
+.filter-actions,.result-summary,.activity-card,.card-select,
+.finder-bottom,footer{display:flex;align-items:center;gap:15px}
+.header-top{justify-content:space-between;padding-top:24px}
+.logo{width:190px;height:auto;display:block}
+.top-nav,.main-nav{color:white;font-weight:800}
+.top-nav{gap:28px;font-size:15px}
+.eca-link{
+  border:3px solid white;
+  border-radius:48%;
+  padding:12px 35px;
+  text-align:center;
+}
+.eca-link b{display:block;font-size:25px}
+.main-nav{gap:75px;margin:30px 0;font-size:18px}
+.hero{color:white}
+.hero-copy{justify-content:space-between}
+.hero h1{
+  font-size:62px;
+  line-height:1.1;
+  margin:0 0 18px;
+  font-weight:900;
+  letter-spacing:-2px;
+}
+.spark{
+  font-size:28px;
+  color:#f9cf53;
+  margin-left:15px;
+  vertical-align:top;
+}
+.hero-copy p{
+  font-size:21px;
+  line-height:1.55;
+  max-width:775px;
+  margin:0;
+}
+.hero-note{
+  font-weight:800;
+  font-size:18px;
+  transform:rotate(-6deg);
+}
+.hero-note b{font-size:35px}
+.benefits{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:30px;
+  margin:30px 0;
+}
+.illustration{width:75px;height:75px;flex-shrink:0}
+.benefit h2{font-size:22px;line-height:1.4;margin:0}
+.finder-wrap{
+  background:var(--teal);
+  padding:25px 24px 0;
+  border-radius:9px;
+}
+.instructions{
+  color:white;
+  font-size:20px;
+  line-height:1.55;
+  margin:0 0 23px;
+}
+.discovery-controls{
+  justify-content:space-between;
+  padding:20px;
+  background:#f8faf4;
+}
+.age-picker{font-weight:800}
+.age-buttons{gap:8px}
+.age-buttons button{
+  background:white;
+  border:1px solid #d4dcd6;
+  border-radius:5px;
+  padding:11px 18px;
+  font-size:21px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.age-buttons small{font-size:13px;margin-left:4px}
+.age-buttons button[aria-pressed="true"],.primary,.popup-btn{
+  background:var(--navy);
+  color:white;
+}
+.area-picker select{
+  font-size:17px;
+  border:0;
+  background:transparent;
+  max-width:250px;
+  padding:10px;
+}
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+}
+.finder{
+  display:grid;
+  grid-template-columns:42% 58%;
+  grid-template-rows:minmax(0,1fr);
+  height:760px;
+  background:white;
+  overflow:hidden;
+}
+.sidebar{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  min-width:0;
+  z-index:500;
+}
+.search-row{
+  padding:18px;
+  border-bottom:1px solid #ddd;
+  gap:8px;
+  min-height:77px;
+}
+.search-icon{font-size:25px}
+.search-row input{
+  min-width:0;
+  flex:1;
+  border:0;
+  font-size:16px;
+}
+.icon-button,.filter-toggle,.text-button,.back-link{
+  background:none;
+  border:0;
+}
+.filter-toggle{
+  font-size:15px;
+  font-weight:800;
+  white-space:nowrap;
+  padding:8px;
+}
+.filter-panel{
+  position:absolute;
+  top:74px;
+  left:12px;
+  right:12px;
+  z-index:650;
+  background:white;
+  padding:22px;
+  box-shadow:0 6px 25px #20245a30;
+  max-height:calc(100% - 85px);
+  overflow:auto;
+}
+.filter-panel h3{font-size:23px;margin:0 0 18px}
+.filter-panel fieldset{border:0;padding:0;margin:0 0 20px}
+.filter-panel legend{font-weight:800}
+.check{display:flex;gap:9px;align-items:center;margin:14px 0}
+.check input{width:19px;height:19px;accent-color:var(--teal)}
+.filter-panel select{
+  display:block;
+  width:100%;
+  padding:11px;
+  margin:9px 0 18px;
+  background:white;
+  border:1px solid #ddd;
+}
+.filter-actions{justify-content:space-between;flex-wrap:wrap}
+.text-button,.back-link{text-decoration:underline}
+.primary,.popup-btn{
+  border:0;
+  border-radius:5px;
+  padding:13px 19px;
+  font-size:17px;
+  font-weight:800;
+}
+.availability-summary{padding:20px;background:#edf4e9}
+.availability-summary.none{background:#f5f3ec}
+.summary-heading{font-size:19px;font-weight:900}
+.summary-heading span{font-weight:600;color:#545d65}
+.availability-summary p{
+  font-size:18px;
+  line-height:1.5;
+  margin:9px 0;
+  color:#374e48;
+}
+.availability-summary small{
+  display:block;
+  font-size:15px;
+  line-height:1.5;
+  color:#56685c;
+}
+.availability-summary button,.result-summary button{
+  border:0;
+  background:none;
+  text-decoration:underline;
+  font-weight:800;
+  padding:0;
+}
+.availability-summary button{font-size:17px;margin-top:6px}
+.result-summary{
+  justify-content:space-between;
+  background:#fafaf8;
+  padding:14px 19px;
+  font-size:15px;
+  border-bottom:1px solid #e9e9ed;
+}
+.result-summary button{font-size:14px}
+.activity-list{
+  flex:1;
+  overflow:auto;
+  min-height:0;
+  scrollbar-width:thin;
+}
+.activity-card{
+  padding:20px 16px;
+  border-bottom:1px solid #e9e9ed;
+  border-left:3px solid transparent;
+  gap:8px;
+}
+.activity-card.selected{
+  background:#eef5ed;
+  border-left-color:var(--teal);
+}
+.card-select{
+  flex:1;
+  text-align:left;
+  border:0;
+  background:none;
+  padding:0;
+  min-width:0;
+}
+.card-select .illustration{width:65px;height:65px}
+.card-copy h3{font-size:20px;line-height:1.35;margin:0 0 8px}
+.card-copy p{
+  font-size:16px;
+  line-height:1.5;
+  color:#656b7d;
+  margin:0 0 9px;
+}
+.family-count{
+  display:inline-block;
+  font-size:16px;
+  line-height:1.5;
+  background:#eaf3e9;
+  color:#36796b;
+  padding:4px 8px;
+}
+.distance{
+  display:block;
+  font-size:15px;
+  line-height:1.5;
+  margin-top:9px;
+  color:#50586c;
+}
+.details-link{
+  border:1px solid #ddd;
+  border-radius:50%;
+  background:white;
+  width:32px;
+  height:32px;
+  flex-shrink:0;
+  font-size:22px;
+}
+.sidebar-foot{
+  padding:14px;
+  font-size:13px;
+  background:#fbfbf7;
+  border-top:1px solid #ddd;
+}
+.dot{
+  display:inline-block;
+  background:var(--teal);
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  margin-right:7px;
+}
+.empty{text-align:center;padding:26px 22px}
+.empty h3{font-size:25px;line-height:1.3}
+.empty p{font-size:18px;line-height:1.55;color:#5d6374}
+.map-shell{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  background:#b1dce1;
+}
+.map{
+  position:absolute;
+  inset:0;
+  height:100%;
+  width:100%;
+  z-index:1;
+}
+.leaflet-container{font-family:inherit;background:#b1dce1}
+.map-label,.map-controls,.map-legend,.tile-note{
+  position:absolute;
+  z-index:400;
+  background:white;
+  border-radius:5px;
+  padding:12px 15px;
+  box-shadow:0 2px 7px #20245a20;
+}
+.map-label{
+  top:17px;
+  left:17px;
+  font-size:15px;
+  font-weight:800;
+}
+.map-controls{right:15px;top:17px;padding:0;overflow:hidden}
+.map-controls button{
+  display:block;
+  width:42px;
+  height:42px;
+  font-size:25px;
+  background:white;
+  border:0;
+  border-bottom:1px solid #eee;
+}
+.map-legend{
+  bottom:25px;
+  left:50%;
+  transform:translateX(-50%);
+  max-width:calc(100% - 30px);
+  width:max-content;
+  font-size:14px;
+  text-align:center;
+}
+.map-legend strong{display:block;margin-bottom:10px;font-size:15px}
+.map-legend span{
+  display:inline-flex;
+  gap:4px;
+  align-items:center;
+  margin:0 4px;
+}
+.several{--badge:#599b8d}
+.limited{--badge:#e2b841}
+.none{--badge:#a4aaa6}
+.legend-dot{
+  background:var(--badge);
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  display:inline-block;
+}
+.area-marker,.eca-marker{background:none;border:0}
+.neighborhood-pin{
+  position:relative;
+  width:182px;
+  min-height:74px;
+  padding:12px 9px 11px 42px;
+  border-radius:5px;
+  border:1.5px solid var(--badge);
+  background:#fffefa;
+  box-shadow:0 2px 8px #20245a20;
+  color:var(--navy);
+}
+.neighborhood-pin>span{
+  position:absolute;
+  left:8px;
+  top:17px;
+  width:27px;
+  height:27px;
+  background:var(--badge);
+  color:white;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:17px;
+  font-weight:900;
+}
+.neighborhood-pin.limited>span{color:#494526}
+.neighborhood-pin strong{
+  display:block;
+  font-size:15px;
+  line-height:1.25;
+}
+.neighborhood-pin small{
+  display:block;
+  font-size:14px;
+  line-height:1.35;
+  margin-top:5px;
+  color:#465b53;
+}
+.neighborhood-pin.none{background:#f4f4ef}
+.marker-art{
+  position:relative;
+  width:48px;
+  height:48px;
+  border:3px solid white;
+  border-radius:50%;
+  background:white;
+  box-shadow:0 2px 5px #20245a30;
+}
+.marker-art .illustration{width:100%;height:100%}
+.marker-count{
+  position:absolute;
+  right:-10px;
+  top:-7px;
+  width:24px;
+  height:24px;
+  background:var(--navy);
+  color:white;
+  border:2px solid white;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:13px;
+  font-weight:900;
+}
+.map-popup strong{font-size:20px;color:var(--navy)}
+.map-popup p{
+  font-size:16px;
+  line-height:1.5;
+  margin:10px 0;
+  color:#656b7d;
+}
+.popup-btn{width:100%;font-size:16px}
+.leaflet-control-attribution{font-size:9px!important}
+.tile-note{
+  bottom:115px;
+  left:16px;
+  right:16px;
+  font-size:16px;
+  line-height:1.5;
+}
+.mobile-neighborhoods{display:none}
+.finder-bottom{
+  justify-content:space-between;
+  align-items:flex-start;
+  color:white;
+  padding:16px 2px;
+  font-size:15px;
+  line-height:1.5;
+}
+.finder-bottom p{margin:0}
+.finder-bottom p:last-child{font-size:14px}
+footer{
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-top:29px;
+  padding:22px 0 28px;
+  border-top:1px solid #ffffff40;
+  color:white;
+  font-size:13px;
+  line-height:1.6;
+}
+.dialog{
+  border:0;
+  padding:0;
+  border-radius:13px;
+  width:590px;
+  max-width:calc(100% - 26px);
+  max-height:90dvh;
+  overflow:auto;
+  background:#fffdf8;
+  color:var(--navy);
+}
+.dialog::backdrop{
+  background:#13163890;
+  backdrop-filter:blur(3px);
+}
+.close-modal{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:34px;
+  height:34px;
+  border:0;
+  border-radius:50%;
+  background:white;
+  font-size:25px;
+}
+.modal-art{
+  height:140px;
+  background:#e9f0e3;
+  display:grid;
+  place-items:center;
+}
+.modal-art .illustration{width:125px;height:125px}
+.modal-content{padding:25px 30px 30px}
+.eyebrow{
+  font-size:15px;
+  color:#528f81;
+  font-weight:800;
+  line-height:1.5;
+}
+.dialog h2{font-size:31px;line-height:1.2;margin:0 0 14px}
+.description,.fact{font-size:18px;line-height:1.6;color:#626978}
+.detail-facts{display:grid;gap:18px;margin:22px 0}
+.fact small{
+  display:block;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:1px;
+}
+.fact em{display:block;font-size:16px;font-style:normal}
+.caregiver-note{font-size:15px;line-height:1.6;color:#626978}
+.wide{width:100%}
+.dialog form label{
+  display:block;
+  font-size:17px;
+  font-weight:800;
+  margin:18px 0;
+}
+.dialog form input,.dialog form select{
+  display:block;
+  width:100%;
+  padding:13px;
+  font-size:17px;
+  margin-top:8px;
+  border:1px solid #d7ddd9;
+  border-radius:4px;
+  background:white;
+}
+.back-link{display:block;margin:15px auto 0}
+.success{text-align:center;padding:35px 30px}
+.success .illustration{
+  display:block;
+  width:120px;
+  height:120px;
+  margin:15px auto;
+}
+.success p{font-size:18px;line-height:1.5}
+.confirmation{
+  display:grid;
+  gap:7px;
+  text-align:left;
+  padding:20px;
+  background:#edf3e9;
+  font-size:17px;
+  line-height:1.5;
+  margin:20px 0;
+}
+.confirmation small{font-size:14px}
+.map-shell:fullscreen{height:100vh;width:100vw}
+[hidden]{display:none!important}
+
+@media(max-width:1100px){
+  .hero-note{display:none}
+  .top-nav{gap:18px;font-size:13px}
+  .main-nav{gap:45px}
+  .benefits{gap:20px}
+  .benefit .illustration{width:60px;height:60px}
+  .benefit h2{font-size:20px}
+  .age-picker{flex-wrap:wrap}
+  .age-picker>span{flex-basis:100%}
+  .age-buttons button{padding:10px 14px}
+  .finder{grid-template-columns:46% 54%}
+  .card-select .illustration{width:52px;height:52px}
+  .card-copy h3{font-size:18px}
+}
+@media(max-width:740px){
+  .container{width:calc(100% - 32px)}
+  .header-top{align-items:flex-start;padding-top:18px;gap:12px}
+  .logo{width:145px}
+  .top-nav{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    max-width:200px;
+    gap:10px;
+    font-size:10px;
+  }
+  .eca-link{padding:6px 12px;border-width:2px}
+  .eca-link b{display:inline;font-size:17px}
+  .main-nav{
+    justify-content:space-between;
+    gap:0;
+    font-size:11px;
+    margin:26px 0;
+  }
+  .hero h1{font-size:39px;letter-spacing:-1.4px}
+  .spark{font-size:22px;margin-left:8px}
+  .hero-copy p{font-size:18px}
+  .benefits{grid-template-columns:1fr;gap:24px}
+  .benefit h2{font-size:21px}
+  .finder-wrap{padding:20px 12px 0}
+  .instructions{font-size:18px}
+  .discovery-controls{
+    flex-direction:column;
+    align-items:stretch;
+    padding:18px 14px;
+  }
+  .age-buttons{width:100%}
+  .age-buttons button{flex:1;padding:12px 8px;font-size:20px}
+  .area-picker select{width:100%;max-width:none}
+  .finder{display:flex;flex-direction:column-reverse;height:auto}
+  .map-shell{height:480px;flex-shrink:0}
+  .sidebar{height:790px;min-height:790px}
+  .search-row{padding:17px 13px;gap:6px}
+  .filter-toggle{font-size:14px}
+  .card-select{gap:10px}
+  .card-copy h3{font-size:19px}
+  .details-link{width:29px;height:29px}
+  .map-label{font-size:14px;max-width:220px}
+  .map-legend{font-size:13px;padding:11px 9px}
+  .neighborhood-pin{
+    width:36px;
+    height:36px;
+    min-height:36px;
+    padding:0;
+    border:3px solid white;
+    border-radius:50%;
+    background:var(--badge);
+  }
+  .neighborhood-pin>span{
+    position:static;
+    width:30px;
+    height:30px;
+    background:none;
+    font-size:20px;
+  }
+  .neighborhood-pin strong,.neighborhood-pin small{display:none}
+  .neighborhood-pin.none{background:#8c9792}
+  .mobile-neighborhoods{
+    position:absolute;
+    left:12px;
+    right:12px;
+    bottom:118px;
+    z-index:400;
+    display:block;
+  }
+  .mobile-neighborhoods>p{
+    display:inline-block;
+    background:white;
+    padding:5px 8px;
+    margin:0 0 7px;
+    font-size:14px;
+  }
+  .mobile-neighborhoods>div{
+    display:flex;
+    gap:9px;
+    overflow-x:auto;
+    padding-bottom:7px;
+    scrollbar-width:thin;
+  }
+  .mobile-neighborhoods button{
+    flex:0 0 235px;
+    text-align:left;
+    background:#fffefa;
+    border:2px solid var(--badge);
+    border-radius:5px;
+    padding:12px 14px;
+    line-height:1.4;
+  }
+  .mobile-neighborhoods strong{display:block;font-size:17px}
+  .mobile-neighborhoods span{display:block;font-size:16px;margin-top:5px}
+  .finder-bottom{flex-direction:column;font-size:14px;gap:8px}
+  footer{font-size:12px}
+  .sidebar-foot{font-size:12px}
+  .dialog h2{font-size:28px}
+  .modal-content{padding:25px 21px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important;transition:none!important}
+}
+</style>
+</head>
+
+<body>
+
+<!-- Original illustrations defined once and reused around the page. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <symbol id="friends" viewBox="0 0 100 100">
+    <path d="M6 53C3 26 20 6 48 6c30-4 46 17 46 45 4 27-19 43-45 44C23 98 7 83 6 53Z" fill="#dbead9"/>
+    <path d="M14 82c20-8 49-8 73 0" fill="none" stroke="#599b8d" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="29" cy="33" r="9" fill="#e4ae7e"/>
+    <circle cx="65" cy="37" r="9" fill="#bc8159"/>
+    <path d="M19 49q10-10 20 0l2 20H17Z" fill="#20245a"/>
+    <path d="M55 53q10-10 20 0l2 20H53Z" fill="#f46149"/>
+    <path d="m23 72-2 13m14-13 2 13m22-13-2 13m14-13 2 13M20 29q8-14 18 0M56 33q8-14 18 0" fill="none" stroke="#20245a" stroke-width="4" stroke-linecap="round"/>
+    <path d="m39 53 9 7 9-7" fill="none" stroke="#bc8159" stroke-width="4"/>
+    <path d="m46 22 3-6 3 6m-1-1 6-2" fill="none" stroke="#f46149" stroke-width="2"/>
+  </symbol>
+
+  <symbol id="neighbors" viewBox="0 0 100 100">
+    <path d="M7 50C5 20 28 2 55 7c29-1 42 24 38 50-1 27-23 40-50 36C17 94 6 77 7 50Z" fill="#9ad5e3"/>
+    <path d="M13 48V30l15-12 15 12v18Z" fill="#fff8e9"/>
+    <path d="M57 48V30l15-12 15 12v18Z" fill="#f9cf53"/>
+    <path d="m12 30 16-13 16 13m12 0 16-13 16 13" fill="none" stroke="#20245a" stroke-width="3"/>
+    <path d="M24 48V36h8v12m36 0V36h8v12" fill="#599b8d"/>
+    <path d="M16 58q0 12 20 10m48-10q0 12-20 10" fill="none" stroke="#fff8e9" stroke-width="3" stroke-dasharray="3 4"/>
+    <circle cx="43" cy="60" r="6" fill="#bc8159"/>
+    <circle cx="60" cy="60" r="6" fill="#e4ae7e"/>
+    <path d="M36 72q7-9 14 0v12H36Z" fill="#f46149"/>
+    <path d="M53 72q7-9 14 0v12H53Z" fill="#20245a"/>
+    <path d="m49 73 4 2m-13 8-2 7m8-7 1 7m11-7-1 7m7-7 2 7" fill="none" stroke="#20245a" stroke-width="3"/>
+  </symbol>
+
+  <symbol id="together" viewBox="0 0 100 100">
+    <path d="M7 52C4 23 23 4 52 7c30-3 45 22 41 50-1 26-24 40-49 37C18 93 6 77 7 52Z" fill="#f9cf53"/>
+    <path d="M14 81q34-13 72 0" fill="none" stroke="#599b8d" stroke-width="4"/>
+    <circle cx="28" cy="34" r="9" fill="#e4ae7e"/>
+    <circle cx="72" cy="35" r="9" fill="#bc8159"/>
+    <path d="M20 29q8-12 16 1m28 0q8-12 16 0" fill="none" stroke="#20245a" stroke-width="5"/>
+    <path d="M18 51q10-11 20 0l-1 20H19Z" fill="#f46149"/>
+    <path d="M62 52q10-11 20 0l-1 20H63Z" fill="#20245a"/>
+    <path d="m22 70-2 14m13-14 2 14m31-13-2 13m13-13 2 13" fill="none" stroke="#20245a" stroke-width="4"/>
+    <path d="m36 51 8 8m20-7-8 7" fill="none" stroke="#bc8159" stroke-width="4"/>
+    <circle cx="50" cy="63" r="10" fill="#fff8e9"/>
+    <path d="m43 63 7-6 7 6-7 6Z" fill="#599b8d"/>
+  </symbol>
+
+  <symbol id="art" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="#9ad5e3"/>
+    <path d="m25 72 6-48h43l5 48Z" fill="#fff8e9"/>
+    <path d="m24 81 19-61m29 61L59 20M30 72h46" fill="none" stroke="#20245a" stroke-width="3"/>
+    <path d="m40 59 10-15 10 15Z" fill="#f46149"/>
+    <circle cx="63" cy="37" r="7" fill="#f9cf53"/>
+    <path d="m38 35 7 5m15 23 8-7" stroke="#599b8d" stroke-width="4"/>
+  </symbol>
+
+  <symbol id="indoor" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="#f7b39e"/>
+    <path d="M17 77h68" stroke="#20245a" stroke-width="3"/>
+    <path d="M22 52h22v24H22Z" fill="#20245a"/>
+    <path d="M48 52h26v24H48Z" fill="#f9cf53"/>
+    <path d="m20 48 13-22 14 22Z" fill="#599b8d"/>
+    <path d="m47 48 14-22 14 22Z" fill="#f46149"/>
+    <circle cx="33" cy="64" r="5" fill="#9ad5e3"/>
+    <path d="M57 76V61h9v15" fill="#fff8e9"/>
+  </symbol>
+</defs>
+</svg>
+
+<a class="skip" href="#finder">Skip to activities</a>
+
+<header class="container">
+  <div class="header-top">
+    <img
+      class="logo"
+      src="https://www.eca.gov.ae/-/media/ECA/Identity/logo.webp?iar=0&amp;rev=020e0e329a4c43728620bf70f54e6a4e&amp;hash=248C14358D0CBC86CEE590B26665E331"
+      alt="Abu Dhabi Early Childhood Authority"
+    >
+    <nav class="top-nav" aria-label="Information navigation">
+      <span>Search</span>
+      <span>FAQs</span>
+      <span>Get In Touch</span>
+      <span lang="ar" dir="rtl">العربية</span>
+      <span class="eca-link">The ECA <b>→</b></span>
+    </nav>
+  </div>
+
+  <nav class="main-nav" aria-label="Main navigation">
+    <span>Parent Resources</span>
+    <span>Events</span>
+    <span>Announcements</span>
+    <span>Community ⌄</span>
+  </nav>
+</header>
+
+<main>
+  <section class="hero container">
+    <div class="hero-copy">
+      <div>
+        <h1>Find a Playmate<span class="spark" aria-hidden="true">✳</span></h1>
+        <p>Use the interactive map to find play sessions for your child where they can meet children in nearby areas.</p>
+      </div>
+      <div class="hero-note" aria-hidden="true">
+        <b>↪</b> A little play.<br>A new friendship.
+      </div>
+    </div>
+
+    <div class="benefits">
+      <div class="benefit">
+        <svg class="illustration" aria-hidden="true"><use href="#neighbors"/></svg>
+        <h2>Find friends beyond your neighborhood</h2>
+      </div>
+      <div class="benefit">
+        <svg class="illustration" aria-hidden="true"><use href="#friends"/></svg>
+        <h2>Turn small groups into lasting friendships</h2>
+      </div>
+      <div class="benefit">
+        <svg class="illustration" aria-hidden="true"><use href="#together"/></svg>
+        <h2>Plan for the next chance to play</h2>
+      </div>
+    </div>
+  </section>
+
+  <section id="finder" class="finder-wrap container" aria-label="Find play opportunities">
+    <p class="instructions">Choose an age and neighborhood, then select a group to view or join its next session.</p>
+
+    <div class="discovery-controls">
+      <div class="age-picker">
+        <span>Find playmates for ages:</span>
+        <div class="age-buttons" role="group" aria-label="Find playmates by age">
+          <button data-age="0–2" aria-pressed="false">0–2<small> years</small></button>
+          <button data-age="3–5" aria-pressed="true">3–5<small> years</small></button>
+          <button data-age="6–8" aria-pressed="false">6–8<small> years</small></button>
+        </div>
+      </div>
+      <label class="area-picker">
+        <span class="sr-only">Choose neighborhood</span>
+        <select id="area" aria-label="Choose neighborhood">
+          <option value="">All neighborhoods</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="finder">
+      <aside class="sidebar">
+        <div class="search-row">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="search" aria-label="Search by area or playgroup" placeholder="Search by area or playgroup...">
+          <button id="clear-search" class="icon-button" aria-label="Clear search" hidden>×</button>
+          <button id="filter-toggle" class="filter-toggle" aria-expanded="false">☷ Filter</button>
+        </div>
+
+        <form id="filter-panel" class="filter-panel" hidden>
+          <h3>Find the right fit</h3>
+          <fieldset>
+            <legend>Activity type</legend>
+            <label class="check"><input type="checkbox" name="type" value="Outdoor play">Outdoor play</label>
+            <label class="check"><input type="checkbox" name="type" value="Indoor play">Indoor play</label>
+            <label class="check"><input type="checkbox" name="type" value="Creative activities">Creative activities</label>
+            <label class="check"><input type="checkbox" name="type" value="Group play">Group play</label>
+          </fieldset>
+          <label>
+            Day
+            <select id="day">
+              <option>Any day</option>
+              <option>Today</option>
+              <option>Tomorrow</option>
+              <option>This weekend</option>
+            </select>
+          </label>
+          <div class="filter-actions">
+            <button type="button" id="clear-filters" class="text-button">Clear filters</button>
+            <button class="primary" type="submit">Apply filters →</button>
+          </div>
+        </form>
+
+        <div id="availability" class="availability-summary" aria-live="polite"></div>
+        <div id="result-summary" class="result-summary" aria-live="polite"></div>
+        <div id="activity-list" class="activity-list" aria-label="Playgroups"></div>
+
+        <div class="sidebar-foot">
+          <span class="dot"></span>Organized group sessions · Caregivers stay and play.
+        </div>
+      </aside>
+
+      <div class="map-shell" id="map-shell">
+        <div id="map" class="map" aria-label="Interactive map of group play availability in Abu Dhabi"></div>
+
+        <div class="map-label">
+          <span class="dot"></span>Playgroups · Ages <span id="map-age">3–5</span>
+        </div>
+
+        <div id="mobile-neighborhoods" class="mobile-neighborhoods" aria-label="Neighborhood availability"></div>
+
+        <div class="map-controls">
+          <button id="zoom-in" aria-label="Zoom in">+</button>
+          <button id="zoom-out" aria-label="Zoom out">−</button>
+          <button id="show-all" aria-label="Show all Abu Dhabi playgroups">⌖</button>
+          <button id="expand-map" aria-label="Expand map">⛶</button>
+        </div>
+
+        <div class="map-legend">
+          <strong>Group play availability</strong>
+          <span><i class="legend-dot several"></i>Several</span>
+          <span><i class="legend-dot limited"></i>Limited</span>
+          <span><i class="legend-dot none"></i>None scheduled</span>
+        </div>
+
+        <div id="tile-note" class="tile-note" hidden></div>
+      </div>
+    </div>
+
+    <div class="finder-bottom">
+      <p>♧ Shared spaces. Small groups. New connections.</p>
+      <p>Only public venues. Always with a caregiver.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="container">
+  <span>Abu Dhabi Early Childhood Authority</span>
+  <span>Playgroups and participation figures are fictional demonstration data.</span>
+</footer>
+
+<dialog id="details" class="dialog" aria-labelledby="dialog-title"></dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+"use strict";
+
+// Fictional sessions at public venues.
+// No individual child or family location is tracked.
+const activities = [
+  {
+    id:2,
+    name:"Little Explorers Group",
+    area:"Al Mushrif",
+    venue:"Khalifa Park",
+    type:"Outdoor play",
+    ages:[3,5],
+    day:"Friday",
+    time:"10:00 AM",
+    families:0,
+    lat:24.4255,
+    lng:54.4604,
+    art:"friends",
+    description:"Follow a little nature trail, collect colours and discover the park together. A gentle, hosted morning for curious little explorers and their caregivers."
+  },
+  {
+    id:3,
+    name:"Al Raha Weekend Playgroup",
+    area:"Al Raha Beach",
+    venue:"Al Zeina community waterfront",
+    type:"Group play",
+    ages:[6,8],
+    day:"Saturday",
+    time:"5:00 PM",
+    families:1,
+    lat:24.451,
+    lng:54.6138,
+    art:"friends",
+    description:"Come together for cooperative games, silly challenges and relaxed play by the waterfront. Bring water and a favourite outdoor toy to share."
+  },
+  {
+    id:4,
+    name:"Saadiyat Creative Play Circle",
+    area:"Saadiyat Island",
+    venue:"Manarat Al Saadiyat",
+    type:"Creative activities",
+    ages:[6,8],
+    day:"Sunday",
+    time:"11:00 AM",
+    families:1,
+    lat:24.5346,
+    lng:54.4214,
+    art:"art",
+    description:"A colourful morning of collage, drawing and big ideas. Children create side by side, with simple materials and plenty of room for imagination."
+  },
+  {
+    id:6,
+    name:"Yas Tiny Tots Playgroup",
+    area:"Yas Island",
+    venue:"Yas Bay public promenade",
+    type:"Outdoor play",
+    ages:[0,2],
+    day:"Saturday",
+    time:"9:00 AM",
+    families:1,
+    lat:24.4641,
+    lng:54.6089,
+    art:"friends",
+    description:"Sensory play and gentle games for our smallest explorers, in a shaded public meeting space. Caregivers stay with their children throughout."
+  },
+  {
+    id:7,
+    name:"Reem Little Builders Circle",
+    area:"Al Reem Island",
+    venue:"Reem community activity room",
+    type:"Indoor play",
+    ages:[3,5],
+    day:"Sunday",
+    time:"10:30 AM",
+    families:1,
+    lat:24.493,
+    lng:54.4042,
+    art:"indoor",
+    description:"Build a city, a castle or something entirely new. A relaxed indoor session with big blocks, small groups and lots of imagination."
+  },
+  {
+    id:8,
+    name:"Khalidiyah Neighborhood Meetup",
+    area:"Al Khalidiyah",
+    venue:"Khalidiyah Park",
+    type:"Outdoor play",
+    ages:[3,5],
+    day:"Friday",
+    time:"4:30 PM",
+    families:0,
+    lat:24.4692,
+    lng:54.3441,
+    art:"friends",
+    description:"A new neighborhood circle for children to meet familiar faces through simple shared games. Be the first family to join; a play host welcomes everyone at the public playground."
+  }
+];
+
+const areas = [
+  {name:"Al Reem Island",lat:24.497,lng:54.411},
+  {name:"Al Raha Beach",lat:24.451,lng:54.614},
+  {name:"Khalifa City",lat:24.416,lng:54.575},
+  {name:"Yas Island",lat:24.464,lng:54.609},
+  {name:"Al Mushrif",lat:24.4255,lng:54.4604},
+  {name:"Al Khalidiyah",lat:24.4692,lng:54.3441},
+  {name:"Saadiyat Island",lat:24.535,lng:54.421},
+  {name:"Mohammed Bin Zayed City",lat:24.354,lng:54.551}
+];
+
+const $ = id => document.getElementById(id);
+
+const state = {
+  age:"3–5",
+  area:"",
+  query:"",
+  types:[],
+  day:"Any day",
+  nearby:false
+};
+
+const joined = new Set();
+const markers = new Map();
+const smallScreen = matchMedia("(max-width:740px)");
+
+let selected = null;
+
+const illustration = kind =>
+  `<svg class="illustration" viewBox="0 0 100 100" aria-hidden="true"><use href="#${kind}"></use></svg>`;
+
+const level = count =>
+  count > 1 ? "several" : count === 1 ? "limited" : "none";
+
+const familyCount = activity =>
+  activity.families + Number(joined.has(activity.id));
+
+const familyText = activity => {
+  const count = familyCount(activity);
+  return count
+    ? `${count} ${count === 1 ? "family" : "families"} joining`
+    : "Be the first family to join";
+};
+
+function distance(a,b) {
+  const radians = Math.PI / 180;
+  const dlat = (b.lat-a.lat) * radians;
+  const dlng = (b.lng-a.lng) * radians;
+  const h =
+    Math.sin(dlat/2)**2 +
+    Math.cos(a.lat*radians) *
+    Math.cos(b.lat*radians) *
+    Math.sin(dlng/2)**2;
+
+  return 12742 * Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+
+function eligible(activity) {
+  const [low,high] = state.age.split("–").map(Number);
+
+  if(activity.ages[0] > high || activity.ages[1] < low) {
+    return false;
+  }
+
+  if(
+    state.types.length &&
+    !state.types.includes(activity.type) &&
+    !state.types.includes("Group play")
+  ) {
+    return false;
+  }
+
+  if(state.day === "Any day") return true;
+
+  if(state.day === "This weekend") {
+    return ["Friday","Saturday","Sunday"].includes(activity.day);
+  }
+
+  const when = new Date(
+    Date.now() + (state.day === "Tomorrow" ? 86400000 : 0)
+  );
+
+  const weekday = new Intl.DateTimeFormat("en-US",{
+    weekday:"long",
+    timeZone:"Asia/Dubai"
+  }).format(when);
+
+  return activity.day === weekday;
+}
+
+function nearest() {
+  const origin = areas.find(area => area.name === state.area);
+  if(!origin) return [];
+
+  return activities
+    .filter(activity => eligible(activity) && activity.area !== state.area)
+    .sort((a,b) => distance(origin,a) - distance(origin,b))
+    .slice(0,2);
+}
+
+function chooseArea(value) {
+  state.area = value;
+  state.query = "";
+  state.nearby = false;
+  $("search").value = "";
+  $("area").value = value;
+  $("filter-panel").hidden = true;
+  $("filter-toggle").setAttribute("aria-expanded","false");
+  render();
+}
+
+function highlight(activity,scroll=false) {
+  selected = activity.id;
+
+  document.querySelectorAll(".activity-card").forEach(card => {
+    const matches = Number(card.dataset.id) === activity.id;
+    card.classList.toggle("selected",matches);
+    card.querySelector(".card-select")
+      .setAttribute("aria-pressed",String(matches));
+  });
+
+  if(scroll) {
+    $("activity-"+activity.id)?.scrollIntoView({
+      behavior:"smooth",
+      block:"nearest"
+    });
+  }
+}
+
+function pick(activity) {
+  if(!markers.has(activity.id)) {
+    chooseArea(activity.area);
+  }
+
+  highlight(activity);
+
+  if(map) {
+    const reducedMotion =
+      matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+    map.flyTo([activity.lat,activity.lng],14,{
+      duration:reducedMotion ? 0 : .7
+    });
+
+    markers.get(activity.id)?.openPopup();
+  }
+}
+
+function explore() {
+  state.query = "";
+  $("search").value = "";
+  state.nearby = true;
+  render();
+}
+
+function clearAll() {
+  state.area = "";
+  state.query = "";
+  state.types = [];
+  state.day = "Any day";
+  state.nearby = false;
+
+  $("area").value = "";
+  $("search").value = "";
+  $("day").value = "Any day";
+
+  document.querySelectorAll('[name="type"]').forEach(input => {
+    input.checked = false;
+  });
+
+  $("filter-panel").hidden = true;
+  $("filter-toggle").setAttribute("aria-expanded","false");
+  render();
+}
+
+areas.forEach(area => {
+  const option = document.createElement("option");
+  option.value = area.name;
+  option.textContent = area.name;
+  $("area").append(option);
+});
+
+const map = window.L
+  ? L.map("map",{
+      zoomControl:false,
+      scrollWheelZoom:false
+    }).setView([24.465,54.46],11)
+  : null;
+
+const layer = map ? L.layerGroup().addTo(map) : null;
+
+function mapFailure(message) {
+  $("tile-note").textContent = message;
+  $("tile-note").hidden = false;
+}
+
+if(map) {
+  if(location.protocol === "file:") {
+    mapFailure(
+      "Open the hosted website to load the map background. You can still search areas and view playgroups here."
+    );
+  } else {
+    const tiles = L.tileLayer(
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom:19,
+        referrerPolicy:"strict-origin-when-cross-origin",
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+      }
+    );
+
+    tiles.once("tileerror",() => {
+      tiles.remove();
+      mapFailure(
+        "The map background is unavailable. You can still search areas, select markers and view playgroups."
+      );
+    });
+
+    tiles.addTo(map);
+  }
+
+  new ResizeObserver(() => {
+    map.invalidateSize({pan:false});
+    drawMap();
+  }).observe($("map"));
+} else {
+  mapFailure(
+    "The map library could not load. Check your internet connection. The playgroup list and join flow still work."
+  );
+}
+
+function anchor(area) {
+  if(smallScreen.matches) {
+    return area.name === "Yas Island" ? [18,46] : [18,18];
+  }
+
+  const positions = {
+    "Yas Island":[70,155],
+    "Al Raha Beach":[75,65],
+    "Al Reem Island":[140,0],
+    "Saadiyat Island":[100,70],
+    "Al Khalidiyah":[145,-50],
+    "Al Mushrif":[115,10],
+    "Khalifa City":[91,-5]
+  };
+
+  return positions[area.name] || [91,5];
+}
+
+function addArea(area,count) {
+  if(!layer) return;
+
+  const html = `
+    <div class="neighborhood-pin ${level(count)}">
+      <span>${count || "–"}</span>
+      <strong>${area.name}</strong>
+      <small>${
+        count
+          ? `${count} upcoming play ${count === 1 ? "group" : "groups"}`
+          : "None scheduled"
+      }</small>
+    </div>
+  `;
+
+  L.marker([area.lat,area.lng],{
+    icon:L.divIcon({
+      html,
+      className:"area-marker",
+      iconSize:smallScreen.matches ? [36,36] : [182,74],
+      iconAnchor:anchor(area)
+    }),
+    title:`${area.name}: ${count} upcoming play groups`,
+    riseOnHover:true
+  })
+  .on("click",() => chooseArea(area.name))
+  .addTo(layer);
+}
+
+function getResults() {
+  const pool = state.nearby
+    ? nearest()
+    : activities.filter(activity =>
+        eligible(activity) &&
+        (!state.area || activity.area === state.area)
+      );
+
+  const query = state.query.trim().toLowerCase();
+
+  return pool.filter(activity =>
+    !query ||
+    `${activity.name} ${activity.area} ${activity.type}`
+      .toLowerCase()
+      .includes(query)
+  );
+}
+
+function drawMap() {
+  if(!map || !layer) return;
+
+  map.closePopup();
+  layer.clearLayers();
+  markers.clear();
+
+  const overview =
+    !state.area && !state.nearby && !state.query.trim();
+
+  const groups = activities.filter(eligible);
+  const results = getResults();
+
+  if(overview) {
+    areas.forEach(area => {
+      const count = groups.filter(
+        activity => activity.area === area.name
+      ).length;
+      addArea(area,count);
+    });
+
+    map.fitBounds(
+      L.latLngBounds(areas.map(area => [area.lat,area.lng])),
+      {
+        padding:smallScreen.matches ? [65,55] : [115,85],
+        maxZoom:12,
+        animate:false
+      }
+    );
+  } else {
+    results.forEach(activity => {
+      const html = `
+        <div class="marker-art">
+          ${illustration(activity.art)}
+          <span class="marker-count">${familyCount(activity)}</span>
+        </div>
+      `;
+
+      const marker = L.marker([activity.lat,activity.lng],{
+        icon:L.divIcon({
+          html,
+          className:"eca-marker",
+          iconSize:[54,58],
+          iconAnchor:[27,52],
+          popupAnchor:[0,-48]
+        }),
+        title:activity.name
+      });
+
+      const box = document.createElement("div");
+      box.className = "map-popup";
+      box.innerHTML = `
+        <strong>${activity.name}</strong>
+        <p>${activity.area} · Ages ${activity.ages.join("–")}</p>
+        <p>${activity.day}, ${activity.time} · ${familyText(activity)}</p>
+        <button class="popup-btn">View playgroup →</button>
+      `;
+
+      box.querySelector("button").onclick = () => openDetails(activity);
+      marker.bindPopup(box,{maxWidth:300});
+      marker.on("click",() => highlight(activity,true));
+      marker.addTo(layer);
+      markers.set(activity.id,marker);
+    });
+
+    const origin = areas.find(area => area.name === state.area);
+
+    if(origin && !groups.some(activity => activity.area === origin.name)) {
+      addArea(origin,0);
+    }
+
+    if(results.length) {
+      const points = results.map(activity =>
+        L.latLng(activity.lat,activity.lng)
+      );
+
+      if(state.nearby && origin) {
+        points.push(L.latLng(origin.lat,origin.lng));
+      }
+
+      map.fitBounds(L.latLngBounds(points),{
+        padding:[65,65],
+        maxZoom:14,
+        animate:false
+      });
+    } else if(origin) {
+      map.setView([origin.lat,origin.lng],13,{animate:false});
+    }
+  }
+}
+
+function render() {
+  selected = null;
+
+  const groups = activities.filter(eligible);
+  const local = groups.filter(activity =>
+    !state.area || activity.area === state.area
+  );
+  const nearby = nearest();
+  const results = getResults();
+
+  document.querySelectorAll("[data-age]").forEach(button => {
+    button.setAttribute(
+      "aria-pressed",
+      String(button.dataset.age === state.age)
+    );
+  });
+
+  $("map-age").textContent = state.age;
+  $("clear-search").hidden = !state.query;
+
+  const filterCount =
+    state.types.length + Number(state.day !== "Any day");
+
+  $("filter-toggle").textContent =
+    "☷ Filter" + (filterCount ? ` (${filterCount})` : "");
+
+  $("availability").className =
+    "availability-summary" + (!local.length ? " none" : "");
+
+  const summaryExtra = !state.area
+    ? "<small>Some neighborhoods have no sessions scheduled. Select an area to see what’s nearby.</small>"
+    : !local.length && nearby.length
+      ? `<p>${nearby.length} groups available in nearby neighborhoods.</p>
+         <button id="summary-explore">${
+           state.nearby ? "Showing nearby groups" : "Explore nearby groups"
+         } →</button>`
+      : local.length
+        ? '<button id="view-groups">View groups →</button>'
+        : "";
+
+  $("availability").innerHTML = `
+    <div class="summary-heading">
+      ${state.area || "Across Abu Dhabi"}
+      <span>· Ages ${state.age}</span>
+    </div>
+    <p>${
+      local.length
+        ? `${local.length} upcoming group play ${local.length === 1 ? "session" : "sessions"}.`
+        : "No upcoming group play sessions in this area."
+    }</p>
+    ${summaryExtra}
+  `;
+
+  if($("summary-explore")) {
+    $("summary-explore").onclick = explore;
+  }
+
+  if($("view-groups")) {
+    $("view-groups").onclick = () => {
+      if(results.length) pick(results[0]);
+      $("activity-list").scrollTo({top:0,behavior:"smooth"});
+    };
+  }
+
+  $("result-summary").innerHTML = state.nearby
+    ? `<span>Closest groups to ${state.area}</span>
+       <button id="back-area">Back to area</button>`
+    : `<span>${results.length} matching play ${results.length === 1 ? "group" : "groups"}</span>`;
+
+  if($("back-area")) {
+    $("back-area").onclick = () => {
+      state.nearby = false;
+      render();
+    };
+  }
+
+  const origin = areas.find(area => area.name === state.area);
+
+  $("activity-list").innerHTML = results.map(activity => `
+    <article
+      id="activity-${activity.id}"
+      class="activity-card"
+      data-id="${activity.id}"
+    >
+      <button
+        class="card-select"
+        aria-label="Show ${activity.name} on map"
+        aria-pressed="false"
+      >
+        ${illustration(activity.art)}
+        <div class="card-copy">
+          <h3>${activity.name}</h3>
+          <p>${activity.area} · Ages ${activity.ages.join("–")}</p>
+          <p>▦ ${activity.day} · ${activity.time}</p>
+          <span class="family-count">♧ ${familyText(activity)}</span>
+          ${
+            state.nearby && origin
+              ? `<span class="distance">About ${Math.round(distance(origin,activity))} km from ${state.area}</span>`
+              : ""
+          }
+        </div>
+      </button>
+      <button
+        class="details-link"
+        aria-label="View details for ${activity.name}"
+      >↗</button>
+    </article>
+  `).join("");
+
+  results.forEach(activity => {
+    const card = $("activity-"+activity.id);
+    card.querySelector(".card-select").onclick = () => pick(activity);
+    card.querySelector(".details-link").onclick = () => openDetails(activity);
+  });
+
+  if(!results.length) {
+    const canExplore =
+      state.area && nearby.length && !state.nearby;
+
+    $("activity-list").innerHTML = `
+      <div class="empty">
+        ${illustration("friends")}
+        <h3>${
+          !local.length
+            ? "No group play sessions nearby just yet."
+            : "No playgroups match your search."
+        }</h3>
+        <p>${
+          !local.length
+            ? "The next opportunity to play together may be in a neighboring area."
+            : "Try another area or playgroup name, or clear your filters."
+        }</p>
+        <button id="empty-action" class="primary">${
+          canExplore ? "Explore nearby groups" : "Clear filters"
+        } →</button>
+      </div>
+    `;
+
+    $("empty-action").onclick = canExplore ? explore : clearAll;
+  }
+
+  const showAreas =
+    !state.area && !state.nearby && !state.query.trim();
+
+  $("mobile-neighborhoods").hidden = !showAreas;
+
+  if(showAreas) {
+    $("mobile-neighborhoods").innerHTML =
+      "<p>Swipe areas to compare playgroups</p><div>" +
+      areas.map(area => {
+        const count = groups.filter(
+          activity => activity.area === area.name
+        ).length;
+
+        return `
+          <button class="${level(count)}" data-area="${area.name}">
+            <strong>${area.name}</strong>
+            <span>${
+              count
+                ? `${count} upcoming play ${count === 1 ? "group" : "groups"}`
+                : "No groups scheduled"
+            }</span>
+          </button>
+        `;
+      }).join("") +
+      "</div>";
+
+    $("mobile-neighborhoods").querySelectorAll("button").forEach(button => {
+      button.onclick = () => chooseArea(button.dataset.area);
+    });
+  }
+
+  drawMap();
+}
+
+function openDetails(activity,step="detail") {
+  const dialog = $("details");
+
+  if(joined.has(activity.id) && step === "detail") {
+    step = "success";
+  }
+
+  const closeButton =
+    '<button class="close-modal" aria-label="Close activity details">×</button>';
+
+  if(step === "success") {
+    dialog.innerHTML = closeButton + `
+      <div class="success">
+        ${illustration("friends")}
+        <h2 id="dialog-title">You’re on the list!</h2>
+        <p>You're on the list! We look forward to seeing you there.</p>
+        <div class="confirmation">
+          <strong>${activity.name}</strong>
+          <span>${activity.day}, ${activity.time}</span>
+          <span>${activity.venue} · ${activity.area}</span>
+          <small>This is a browser-only confirmation. No booking or personal data is saved.</small>
+        </div>
+        <button id="done" class="primary">Back to exploring →</button>
+      </div>
+    `;
+  } else {
+    let body;
+
+    if(step === "detail") {
+      body = `
+        <p class="description">${activity.description}</p>
+        <div class="detail-facts">
+          <div class="fact">
+            <small>PUBLIC MEETING PLACE</small>
+            ${activity.venue}
+            <em>${activity.area}</em>
+          </div>
+          <div class="fact">
+            <small>NEXT GROUP PLAY SESSION</small>
+            ${activity.day}, ${activity.time}
+          </div>
+          <div class="fact">
+            <small>FAMILIES JOINING</small>
+            ${familyText(activity)}
+          </div>
+        </div>
+        <p class="caregiver-note">Caregivers stay and play. Only public venues and aggregate participation counts are shown.</p>
+        <button id="join" class="primary wide">Join this play session →</button>
+      `;
+    } else {
+      const ageOptions = ["0–2","3–5","6–8"]
+        .filter(range => {
+          const [low,high] = range.split("–").map(Number);
+          return activity.ages[0] <= high && activity.ages[1] >= low;
+        })
+        .map(range => `<option>${range}</option>`)
+        .join("");
+
+      body = `
+        <form id="join-form">
+          <p class="description">Join ${activity.name}. Just a couple of details to help you find your play circle.</p>
+          <label>
+            Your display name
+            <input
+              id="display-name"
+              required
+              maxlength="40"
+              autocomplete="off"
+              placeholder="Parent or caregiver display name"
+            >
+          </label>
+          <label>
+            Child’s age range
+            <select id="child-age" aria-label="Child’s age range" required>
+              <option value="">Select an age range</option>
+              ${ageOptions}
+            </select>
+          </label>
+          <p class="caregiver-note">No child’s name or address needed. This interaction is simulated in your browser; nothing is submitted or stored.</p>
+          <button class="primary wide" type="submit">Confirm joining ✓</button>
+          <button id="back-detail" type="button" class="back-link">Back to activity</button>
+        </form>
+      `;
+    }
+
+    dialog.innerHTML = closeButton + `
+      <div class="modal-art">${illustration(activity.art)}</div>
+      <div class="modal-content">
+        <p class="eyebrow">For children ages ${activity.ages.join("–")} · ${activity.area}</p>
+        <h2 id="dialog-title">${
+          step === "join" ? "A little hello starts here" : activity.name
+        }</h2>
+        ${body}
+      </div>
+    `;
+  }
+
+  dialog.querySelector(".close-modal").onclick = () => dialog.close();
+
+  if($("done")) {
+    $("done").onclick = () => dialog.close();
+  }
+
+  if($("join")) {
+    $("join").onclick = () => openDetails(activity,"join");
+  }
+
+  if($("back-detail")) {
+    $("back-detail").onclick = () => openDetails(activity);
+  }
+
+  if($("join-form")) {
+    $("join-form").onsubmit = event => {
+      event.preventDefault();
+
+      if(!$("display-name").value.trim()) {
+        $("display-name").setCustomValidity("Please enter a display name.");
+        $("display-name").reportValidity();
+        return;
+      }
+
+      joined.add(activity.id);
+      render();
+      openDetails(activity,"success");
+    };
+  }
+
+  if($("display-name")) {
+    $("display-name").oninput = () => {
+      $("display-name").setCustomValidity("");
+    };
+  }
+
+  if(!dialog.open) {
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+  }
+
+  dialog.querySelector(".close-modal").focus();
+}
+
+$("details").addEventListener("close",() => {
+  document.body.style.overflow = "";
+});
+
+$("details").addEventListener("click",event => {
+  if(event.target !== $("details")) return;
+
+  const rect = $("details").getBoundingClientRect();
+
+  if(
+    event.clientX < rect.left ||
+    event.clientX > rect.right ||
+    event.clientY < rect.top ||
+    event.clientY > rect.bottom
+  ) {
+    $("details").close();
+  }
+});
+
+document.querySelectorAll("[data-age]").forEach(button => {
+  button.onclick = () => {
+    state.age = button.dataset.age;
+    state.nearby = false;
+    render();
+  };
+});
+
+$("area").onchange = event => chooseArea(event.target.value);
+
+$("search").oninput = event => {
+  state.query = event.target.value;
+  render();
+};
+
+$("clear-search").onclick = () => {
+  state.query = "";
+  $("search").value = "";
+  render();
+};
+
+$("filter-toggle").onclick = () => {
+  const open = $("filter-panel").hidden;
+
+  if(open) {
+    document.querySelectorAll('[name="type"]').forEach(input => {
+      input.checked = state.types.includes(input.value);
+    });
+    $("day").value = state.day;
+  }
+
+  $("filter-panel").hidden = !open;
+  $("filter-toggle").setAttribute("aria-expanded",String(open));
+};
+
+$("filter-panel").onsubmit = event => {
+  event.preventDefault();
+
+  state.types = [
+    ...document.querySelectorAll('[name="type"]:checked')
+  ].map(input => input.value);
+
+  state.day = $("day").value;
+  state.nearby = false;
+  $("filter-panel").hidden = true;
+  $("filter-toggle").setAttribute("aria-expanded","false");
+  render();
+};
+
+$("clear-filters").onclick = () => {
+  state.types = [];
+  state.day = "Any day";
+  state.nearby = false;
+  $("day").value = "Any day";
+
+  document.querySelectorAll('[name="type"]').forEach(input => {
+    input.checked = false;
+  });
+
+  render();
+};
+
+$("zoom-in").onclick = () => map?.zoomIn();
+$("zoom-out").onclick = () => map?.zoomOut();
+$("show-all").onclick = () => chooseArea("");
+
+$("expand-map").onclick = () => {
+  const action = document.fullscreenElement
+    ? document.exitFullscreen()
+    : $("map-shell").requestFullscreen?.();
+
+  action?.catch(() => {});
+};
+
+smallScreen.addEventListener("change",() => {
+  map?.invalidateSize({pan:false});
+  drawMap();
+});
+
+render();
+</script>
+</body>
+</html>
